@@ -25,3 +25,30 @@ This CDK construct simplifies the deployment of the Lambda function and all rela
 - The Lambda function that handles security findings.
 - Optionally, it can create supporting infrastructure such as S3 buckets or DynamoDB tables, depending on your configuration.
 
+## How to use
+
+Sample Stack calling the Construct as below:
+
+```
+#!/usr/bin/env node
+import 'source-map-support/register';
+import * as cdk from 'aws-cdk-lib';
+import * as construct from '@richkang/security-findings-exporter-cdk-construct'
+
+const app = new cdk.App();
+const stack = new cdk.Stack(app, 'SecurityFindingStack');
+
+new construct.SecurityFindingsExporterCdkConstruct(stack,'security-findings-notifier',
+{
+  SecurityFindingsAccounts: "<AWS Accounts for the security findings to be reported>",
+  SecurityFindingsRegions: "<AWS Regions for the security findings to be reported>",
+  Jira_basicAuth_email: "<JIRA user login email address>",
+  Jira_basicAuth_apiToken: '<JIRA API TOKEN>',
+  Jira_serverUrl: "https://<JIRA Cloud URL>.atlassian.net",
+  Jira_projectKey: "<JIRA PROJECT KEY>",
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT || process.env.AWS_ACCOUNT_ID,
+    region: process.env.CDK_DEFAULT_REGION || process.env.AWS_REGION,
+  }
+})
+```
