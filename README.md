@@ -1,0 +1,1 @@
+# security-findings-exporter-cdk-construct
