@@ -1,6 +1,6 @@
 {
   "name": "@richkang/security-findings-exporter-cdk-construct",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "description": "Lambda function that reports Security Findings",
@@ -25,25 +25,29 @@
     "@types/jest": "^29.5.12",
     "@types/node": "22.5.4",
     "aws-cdk-lib": "2.161.0",
-    "constructs": "^10.0.0",
+    "constructs": "10.0.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
-    "typescript": "~5.6.2"
+    "typescript": "~5.6.2",
+    "jsii": "^5.5.4",
+    "jsii-pacmak": "^1.103.1"
   },
   "peerDependencies": {
     "aws-cdk-lib": "2.161.0",
     "constructs": "^10.0.0"
   },
   "dependencies": {
-    "@aws-cdk/aws-lambda-python-alpha": "^2.161.0-alpha.0",
-    "jsii": "^5.5.4",
-    "jsii-pacmak": "^1.103.1"
+    "@aws-cdk/aws-lambda-python-alpha": "^2.161.0-alpha.0"
   },
   "stability": "stable",
   "jsii": {
-    "versionFormat": "short",
-    "tsc": {
-      "outDir": "dist"
+    "outdir": "dist",
+    "versionFormat": "full",
+    "targets": {
+      "python": {
+        "distName": "cdk.CdkEgressApiProxy",
+        "module": "cdk.CdkEgressApiProxy"
+      }
     }
   },
   "keywords": [

@@ -9,12 +9,12 @@ test('Lambda Function and Roles are created', () => {
 
   // WHEN
   new SecurityFindingsExporterCdkConstruct(stack, 'SecurityFindingsExporter', {
-    SecurityFindingsRegions: "",
-    SecurityFindingsAccounts: "",
-    Jira_basicAuth_email: "",
-    Jira_basicAuth_apiToken: "",
-    Jira_serverUrl: "",
-    Jira_projectKey: ""
+    securityFindingsRegions: "",
+    securityFindingsAccounts: "",
+    jiraBasicAuthEmail: "",
+    jiraBasicAuthApiToken: "",
+    jiraServerUrl: "",
+    jiraProjectKey: ""
   
   });
 

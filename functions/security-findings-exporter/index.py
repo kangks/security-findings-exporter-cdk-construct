@@ -2,84 +2,104 @@ import boto3
 import json
 import os
 from jira import JIRA
-
 import logging
+
 logger = logging.getLogger()
-logger.setLevel("INFO")
+logger.setLevel(logging.INFO)
 
 
-def findings_notifier(finding):
-    jira_basic_auth_email = os.getenv("Jira_basicAuth_email")
-    jira_basic_auth_api_token = os.getenv("Jira_basicAuth_apiToken")
-    jira_server_url = os.getenv("Jira_serverUrl")
-    jira_project_key = os.getenv("Jira_projectKey")
-
-    #Jira connection
-    jira_connection = JIRA(
-        basic_auth=(jira_basic_auth_email, jira_basic_auth_api_token),
-        server=jira_server_url
-    )
+def findings_notifier(jira_connection, finding, jira_project_key):
     jira_dict = {
         'project': {'key': jira_project_key},
         'summary': finding['Title'],
-        'description':  f'{finding['Resources']}',
+        'description': f"{finding['Resources']}",
         'issuetype': {'name': 'Bug'}
     }
-    new_issue = jira_connection.create_issue(fields=jira_dict)
-    logger.info(f'new_issue: {new_issue}')
+    
+    try:
+        new_issue = jira_connection.create_issue(fields=jira_dict)
+        logger.info(f"Created new Jira issue: {new_issue}")
+    except Exception as e:
+        logger.error(f"Failed to create Jira issue: {e}")
+
+
+def setup_jira_connection():
+    # Retrieve Jira credentials and server info from environment variables
+    jira_basic_auth_email = os.getenv("Jira_basicAuth_email")
+    jira_basic_auth_api_token = os.getenv("Jira_basicAuth_apiToken")
+    jira_server_url = os.getenv("Jira_serverUrl")
+
+    try:
+        # Establish Jira connection
+        jira_connection = JIRA(
+            basic_auth=(jira_basic_auth_email, jira_basic_auth_api_token),
+            server=jira_server_url
+        )
+        return jira_connection
+    except Exception as e:
+        logger.error(f"Failed to establish Jira connection: {e}")
+        raise e
+
 
 def lambda_handler(event, context):
+    # Load environment variables
+    region = os.getenv("SECURITY_HUB_REGION", os.getenv("AWS_DEFAULT_REGION"))
+    regions = os.getenv("REGIONS", os.getenv("AWS_DEFAULT_REGION")).split(",")
+    accounts = os.getenv("ACCOUNTS", os.getenv("AWS_DEFAULT_ACCOUNT")).split(",")
+    jira_project_key = os.getenv("Jira_projectKey")
 
-    region = os.getenv("SECURITY_HUB_REGION",os.getenv("AWS_DEFAULT_REGION"))
+    logger.info(f"SecurityHub region: {region}, Monitored regions: {regions}, Accounts: {accounts}")
 
-    env_variables_regions = os.getenv("REGIONS",os.getenv("AWS_DEFAULT_REGION"))
-    regions = [item for item in env_variables_regions.split(",") if item]
+    # Setup Jira connection once and reuse
+    jira_connection = setup_jira_connection()
 
-    env_variables_accounts = os.getenv("ACCOUNTS",os.getenv("AWS_DEFAULT_ACCOUNT"))
-    accounts = [item for item in env_variables_accounts.split(",") if item]
+    # Setup boto3 client once
+    client = boto3.client('securityhub', region_name=region)
 
-    logger.info(f'env_variables_securityhub_region: {region}, regions: {regions}, accounts: {accounts}')
-
-    client = (boto3.session.Session(region_name=region)).client('securityhub')
-
-    for accountId in accounts:
+    # Iterate over the accounts
+    for account_id in accounts:
         filters = {
-            'AwsAccountId': [{'Value': accountId, 'Comparison': 'EQUALS'}],
+            'AwsAccountId': [{'Value': account_id, 'Comparison': 'EQUALS'}],
             'ProductName': [{'Value': 'Inspector', 'Comparison': 'EQUALS'}],
             'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}],
             'WorkflowStatus': [{'Value': 'NEW', 'Comparison': 'EQUALS'}],
             'FindingProviderFieldsSeverityLabel': [{'Value': 'CRITICAL', 'Comparison': 'EQUALS'}],
             'VulnerabilitiesFixAvailable': [{'Value': 'YES', 'Comparison': 'EQUALS'}]
-            }
+        }
 
-        pages = client.get_paginator('get_findings').paginate(Filters=filters, PaginationConfig={'MaxItems': 1})
+        # Use paginator to handle multiple pages of findings
+        paginator = client.get_paginator('get_findings')
+        pages = paginator.paginate(Filters=filters)
 
         try:
             for page in pages:
-                for finding in page['Findings']:
-                    logger.info(finding)
-                    findings_notifier(finding)
-                    response = client.batch_update_findings(
-                            FindingIdentifiers=[
-                                {
-                                    "Id": finding['Id'],
-                                    "ProductArn": finding['ProductArn'],
-                                },
-                            ],
-                            Workflow={
-                                'Status': 'NOTIFIED',
-                            },
-                        )
-                    logger.info(response)
-                    for processed_findings in response["ProcessedFindings"]:
-                        logger.info(
-                            f"processed and suppressed id {processed_findings['Id']} productarn {processed_findings['ProductArn']}"
-                        )
-
-                    for unprocessed_findings in response["UnprocessedFindings"]:
-                        logger.error(
-                            f"unprocessed finding id {unprocessed_findings['FindingIdentifier']['Id']} productarn {unprocessed_findings['FindingIdentifier']['ProductArn']} error code {unprocessed_findings['ErrorCode']} error message {unprocessed_findings['ErrorMessage']}"
-                        )                    
+                for finding in page.get('Findings', []):
+                    logger.info(f"Processing finding ID: {finding['Id']}")
                     
+                    # Notify via Jira
+                    findings_notifier(jira_connection, finding, jira_project_key)
+
+                    # Update the finding's workflow status to 'NOTIFIED'
+                    response = client.batch_update_findings(
+                        FindingIdentifiers=[
+                            {
+                                "Id": finding['Id'],
+                                "ProductArn": finding['ProductArn']
+                            }
+                        ],
+                        Workflow={'Status': 'NOTIFIED'}
+                    )
+
+                    # Log processed and unprocessed findings
+                    for processed_finding in response.get("ProcessedFindings", []):
+                        logger.info(f"Successfully processed finding ID: {processed_finding['Id']}, Product ARN: {processed_finding['ProductArn']}")
+
+                    for unprocessed_finding in response.get("UnprocessedFindings", []):
+                        logger.error(f"Failed to process finding ID: {unprocessed_finding['FindingIdentifier']['Id']}, "
+                                     f"Product ARN: {unprocessed_finding['FindingIdentifier']['ProductArn']}, "
+                                     f"Error: {unprocessed_finding['ErrorCode']} - {unprocessed_finding['ErrorMessage']}")
+
+        except client.exceptions.ClientError as e:
+            logger.error(f"ClientError when processing findings for account {account_id}: {e}")
         except Exception as e:
-            logger.error(f"Error {e}")
+            logger.error(f"Unexpected error occurred: {e}")

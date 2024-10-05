@@ -4,12 +4,12 @@ import { Construct } from 'constructs';
 import * as path from 'path';
 
 export interface SecurityFindingsExporterCdkConstructProps extends cdk.StackProps{
-  SecurityFindingsRegions: string,
-  SecurityFindingsAccounts: string,
-  Jira_basicAuth_email: string,
-  Jira_basicAuth_apiToken: string,
-  Jira_serverUrl: string,
-  Jira_projectKey: string
+  readonly securityFindingsRegions: string,
+  readonly securityFindingsAccounts: string,
+  readonly jiraBasicAuthEmail: string,
+  readonly jiraBasicAuthApiToken: string,
+  readonly jiraServerUrl: string,
+  readonly jiraProjectKey: string
 }
 
 export class SecurityFindingsExporterCdkConstruct extends Construct {
@@ -32,12 +32,12 @@ export class SecurityFindingsExporterCdkConstruct extends Construct {
       logGroup: aggregatedLogGroup,
       environment: {
         LOG_LEVEL: 'INFO',
-        REGIONS: props.SecurityFindingsRegions,
-        ACCOUNTS: props.SecurityFindingsAccounts,
-        Jira_basicAuth_email: props.Jira_basicAuth_email,
-        Jira_basicAuth_apiToken: props.Jira_basicAuth_apiToken,
-        Jira_serverUrl: props.Jira_serverUrl,
-        Jira_projectKey: props.Jira_projectKey
+        REGIONS: props.securityFindingsRegions,
+        ACCOUNTS: props.securityFindingsAccounts,
+        Jira_basicAuth_email: props.jiraBasicAuthEmail,
+        Jira_basicAuth_apiToken: props.jiraBasicAuthApiToken,
+        Jira_serverUrl: props.jiraServerUrl,
+        Jira_projectKey: props.jiraProjectKey
       },              
     });
 
