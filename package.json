@@ -3,10 +3,23 @@
   "version": "0.1.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "description": "Lambda function that reports Security Findings",
+  "homepage": "https://github.com/kangks/security-findings-exporter-cdk-construct",
+  "author": {
+    "name": "Richard Kang",
+    "email": "richard@doit.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kangks/security-findings-exporter-cdk-construct.git"
+  },
   "scripts": {
-    "build": "tsc",
     "watch": "tsc -w",
-    "test": "jest"
+    "test": "tsc && jest",
+    "build": "jsii -vvv",
+    "build:watch": "jsii --watch",
+    "package": "jsii-pacmak -vvv"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
@@ -22,6 +35,15 @@
     "constructs": "^10.0.0"
   },
   "dependencies": {
-    "@aws-cdk/aws-lambda-python-alpha": "^2.161.0-alpha.0"
+    "@aws-cdk/aws-lambda-python-alpha": "^2.161.0-alpha.0",
+    "jsii": "^5.5.4",
+    "jsii-pacmak": "^1.103.1"
+  },
+  "stability": "stable",
+  "jsii": {
+    "versionFormat": "short",
+    "tsc": {
+      "outDir": "dist"
+    }
   }
 }
