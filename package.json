@@ -45,5 +45,11 @@
     "tsc": {
       "outDir": "dist"
     }
-  }
+  },
+  "keywords": [
+    "awscdk",
+    "aws-cdk",
+    "cdk",
+    "aws-config"
+  ]  
 }
