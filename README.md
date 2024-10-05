@@ -10,8 +10,15 @@ The Lambda function, written in Python, is responsible for automating the retrie
 - **Fetch security findings** from AWS Security Hub or another security service.
 - **Process the findings** to extract relevant data points, such as severity, affected resources, and timestamps.
 - **Export the findings** to external systems for storage or further analysis, for example, an S3 bucket, DynamoDB table, or a third-party service.
+- **Update Workflow status** from "NEW" to "NOTIFIED"
 
 The function is triggered by specific events, such as the generation of new findings in Security Hub or on a scheduled basis.
+
+1. Once the Lambda found any NEW findings;
+![New findings](images/security_hub_new_findings.png)
+2. Python function will forward to the findings reporter;
+3. Python function will update Workflow status to "NOTIFIED".
+![Notified findings](images/security_hub_notified_findings.png)
 
 ### Key Features:
 - **Automated Security Data Processing**: Automates the entire lifecycle of security findings management.
