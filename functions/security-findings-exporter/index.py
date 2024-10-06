@@ -68,8 +68,7 @@ def lambda_handler(event, context):
         }
 
         # Use paginator to handle multiple pages of findings
-        paginator = client.get_paginator('get_findings')
-        pages = paginator.paginate(Filters=filters)
+        pages = client.get_paginator('get_findings').paginate(Filters=filters, PaginationConfig={'PageSize': 100})
 
         try:
             for page in pages:

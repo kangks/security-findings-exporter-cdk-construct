@@ -1,6 +1,6 @@
 {
   "name": "@richkang/security-findings-exporter-cdk-construct",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "description": "Lambda function that reports Security Findings",
