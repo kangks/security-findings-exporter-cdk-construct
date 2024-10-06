@@ -3939,7 +3939,7 @@
         },
         "locationInModule": {
           "filename": "lib/index.ts",
-          "line": 19
+          "line": 20
         },
         "parameters": [
           {
@@ -3965,7 +3965,7 @@
       "kind": "class",
       "locationInModule": {
         "filename": "lib/index.ts",
-        "line": 15
+        "line": 16
       },
       "name": "SecurityFindingsExporterCdkConstruct",
       "properties": [
@@ -3976,7 +3976,7 @@
           "immutable": true,
           "locationInModule": {
             "filename": "lib/index.ts",
-            "line": 17
+            "line": 18
           },
           "name": "functionARN",
           "type": {
@@ -4092,11 +4092,27 @@
           "type": {
             "primitive": "string"
           }
+        },
+        {
+          "abstract": true,
+          "docs": {
+            "stability": "stable"
+          },
+          "immutable": true,
+          "locationInModule": {
+            "filename": "lib/index.ts",
+            "line": 13
+          },
+          "name": "paginatorMaxItems",
+          "optional": true,
+          "type": {
+            "primitive": "number"
+          }
         }
       ],
       "symbolId": "lib/index:SecurityFindingsExporterCdkConstructProps"
     }
   },
-  "version": "0.1.2",
-  "fingerprint": "m4AQGTAdFAhkB66oBrw/RDUuC2/NTw2jAQm0nwIHFPA="
+  "version": "0.1.4",
+  "fingerprint": "jqclTxVpZVEkpMZKXLre8hBlXoh7kPOl+M2mzfKfcdY="
 }

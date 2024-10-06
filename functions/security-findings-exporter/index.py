@@ -9,12 +9,96 @@ logger.setLevel(logging.INFO)
 
 
 def findings_notifier(jira_connection, finding, jira_project_key):
+    # Response can be found in https://docs.aws.amazon.com/securityhub/1.0/APIReference/API_AwsSecurityFinding.html
+
+    # defails of JIRA rest can be found in https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-post
+
+    # https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/
     jira_dict = {
         'project': {'key': jira_project_key},
         'summary': finding['Title'],
-        'description': f"{finding['Resources']}",
+
+        "description": {
+            "version": 1,
+            "type": "doc",
+            "content": [
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 1
+                    },
+                    "content": [
+                        {
+                        "type": "text",
+                        "text": "Description"
+                        }
+                    ]
+                },                
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"""{finding['Description']}"""
+                        },
+                        {
+                            "type": "hardBreak"
+                        }
+                    ]
+                },
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 1
+                    },
+                    "content": [
+                        {
+                        "type": "text",
+                        "text": "Remediation"
+                        }
+                    ]
+                },                
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "text": f"""{finding['Remediation']}""",
+                            "type": "text"
+                        },
+                        {
+                            "type": "hardBreak"
+                        }
+                    ]
+                },                
+                {
+                    "type": "heading",
+                    "attrs": {
+                        "level": 1
+                    },
+                    "content": [
+                        {
+                        "type": "text",
+                        "text": "Resources"
+                        }
+                    ]
+                },
+                {
+                    "type": "codeBlock",
+                    "content": [
+                        {
+                            "text": f"""{finding['Resources']}""",
+                            "type": "text"
+                        }
+                    ]
+                }
+            ]
+        },
+
+        "labels": [ finding['ProductName'] ],
         'issuetype': {'name': 'Bug'}
     }
+
+    logger.info(f"jira_dict: {jira_dict}")
     
     try:
         new_issue = jira_connection.create_issue(fields=jira_dict)
@@ -33,7 +117,8 @@ def setup_jira_connection():
         # Establish Jira connection
         jira_connection = JIRA(
             basic_auth=(jira_basic_auth_email, jira_basic_auth_api_token),
-            server=jira_server_url
+            server=jira_server_url,
+            options={"rest_api_version":"3"}
         )
         return jira_connection
     except Exception as e:
@@ -56,6 +141,15 @@ def lambda_handler(event, context):
     # Setup boto3 client once
     client = boto3.client('securityhub', region_name=region)
 
+    PaginationConfig={'PageSize': 100}
+    paginator_max_items = os.getenv("PaginatorMaxItems")
+    if paginator_max_items:
+        PaginationConfig["MaxItems"] = paginator_max_items
+        pass
+    else:
+        # proper action/logging based on the context
+        pass
+
     # Iterate over the accounts
     for account_id in accounts:
         filters = {
@@ -66,9 +160,11 @@ def lambda_handler(event, context):
             'FindingProviderFieldsSeverityLabel': [{'Value': 'CRITICAL', 'Comparison': 'EQUALS'}],
             'VulnerabilitiesFixAvailable': [{'Value': 'YES', 'Comparison': 'EQUALS'}]
         }
-
+            
         # Use paginator to handle multiple pages of findings
-        pages = client.get_paginator('get_findings').paginate(Filters=filters, PaginationConfig={'PageSize': 100})
+        pages = client.get_paginator('get_findings').paginate(
+            Filters=filters, PaginationConfig=PaginationConfig
+        )
 
         try:
             for page in pages:
